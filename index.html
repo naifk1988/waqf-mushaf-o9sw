@@ -122,6 +122,9 @@ body[data-hdr="4"] .shead{justify-content:space-between;padding:0 .3em;margin:.1
   border:1px solid var(--gold);outline:1px solid var(--gold);outline-offset:.12em;background:var(--cart-bg2)}
 body[data-hdr="4"] .shead .nm{color:var(--ink)}
 body[data-hdr="4"] .shead .fr::before{content:"\FAFD"}body[data-hdr="4"] .shead .fl2::before{content:"\FAFC"}
+.shead.real{background:none!important;box-shadow:none!important;outline:0!important;border:0!important;padding:0!important;overflow:visible}
+.shead.real::before{display:none!important}
+.shg{font-family:shdr;font-size:1.6em;line-height:1;white-space:nowrap;display:block}
 .basm.glyph{font-size:.92em}
 .page.q4 .basm span{font-size:1em}
 .qtr{color:var(--ink)}
@@ -129,10 +132,9 @@ body[data-hdr="4"] .shead .fr::before{content:"\FAFD"}body[data-hdr="4"] .shead 
 .flow{direction:rtl;text-align:justify;text-align-last:center;font-family:var(--f-quran);line-height:2.3;font-size:22px}
 .flow .num{font-family:var(--f-display);font-size:.78em;margin:0 .12em;display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;
   border:1.5px solid var(--cart);border-radius:50%;line-height:1;vertical-align:.15em;background:var(--cart-bg)}
-.pfoot{display:flex;justify-content:center;margin-top:6px;padding-right:30px}
-.pfoot span{font-family:var(--f-display);font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:#123b26;position:relative;
-  border:1.5px solid #1f6b3e;background:#f5fbf2;border-radius:10px;padding:0 26px;line-height:1.7;box-shadow:0 0 0 3px #f5fbf2,0 0 0 4.5px #1f6b3e}
-.pfoot span::before{content:"";position:absolute;right:-30px;top:50%;width:22px;height:22px;margin-top:-11px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23338a55'/%3E%3Cpath d='M14 3c3 4 3 7 0 11c-3-4-3-7 0-11zM14 25c-3-4-3-7 0-11c3 4 3 7 0 11zM3 14c4-3 7-3 11 0c-4 3-7 3-11 0zM25 14c-4 3-7 3-11 0c4-3 7-3 11 0z' fill='%2389cf98'/%3E%3Ccircle cx='14' cy='14' r='2.2' fill='%23f2c7d4'/%3E%3Ccircle cx='0' cy='0' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='28' cy='0' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='0' cy='28' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='28' cy='28' r='3' fill='%23bfe6c6'/%3E%3C/svg%3E") center/14px repeat;border-radius:50%;border:1.5px solid #1f6b3e}
+.pfoot{display:flex;justify-content:center;margin-top:6px}
+.pfoot span{font-family:var(--f-display);font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);
+  border:1px solid var(--gold);background:var(--cart-bg2);border-radius:10px;padding:0 22px;line-height:1.7;box-shadow:0 0 0 2px var(--cart-bg2),0 0 0 3px var(--gold)}
 .notice{flex:0 0 100%;max-width:620px;margin:0 auto 8px;font-size:12.5px;color:var(--ink-soft);background:var(--sheet);border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
 .loading{padding:60px 0;text-align:center;color:var(--ink-soft)}
 /* neighbouring page shown beside the current one while swiping */
@@ -374,7 +376,14 @@ async function render(){
   if(p!==st.page)return;clearTimeout(st.loadT);
   renderPreview(p);slideIn();
 }
+/* Surah header of the King Fahd Complex (QCF_SurahHeader_COLOR, published by QUL / Tarteel): one coloured glyph per surah,
+   frame and name together. If the font cannot be loaded, the gold cartouche below is used instead. */
+const SHDR_URL="https://static-cdn.tarteel.ai/qul/fonts/surah-names/surah-header/QCF_SurahHeader_COLOR-Regular.ttf";
+const SHDR_CP="fc45,fc46,fc47,fc4a,fc4b,fc4e,fc4f,fc51,fc52,fc53,fc55,fc56,fc58,fc5a,fc5b,fc5c,fc5d,fc5e,fc61,fc62,fc64,fb51,fb52,fb54,fb55,fb57,fb58,fb5a,fb5b,fb5d,fb5e,fb60,fb61,fb63,fb64,fb66,fb67,fb69,fb6a,fb6c,fb6d,fb6f,fb70,fb72,fb73,fb75,fb76,fb78,fb79,fb7b,fb7c,fb7e,fb7f,fb81,fb82,fb84,fb85,fb87,fb88,fb8a,fb8b,fb8d,fb8e,fb90,fb91,fb93,fb94,fb96,fb97,fb99,fb9a,fb9c,fb9d,fb9f,fba0,fba2,fba3,fba5,fba6,fba8,fba9,fbab,fbac,fbae,fbaf,fbb1,fbb2,fbb4,fbb5,fbb7,fbb8,fbba,fbbb,fbbd,fbbe,fbc0,fbc1,fbd3,fbd4,fbd6,fbd7,fbd9,fbda,fbdc,fbdd,fbdf,fbe0,fbe2,fbe3,fbe5,fbe6,fbe8,fbe9,fbeb".split(",").map(x=>parseInt(x,16));
+function loadShdr(){if(st.shdr)return st.shdr;
+  st.shdr=new FontFace("shdr",`url(${SHDR_URL}) format("truetype")`,{display:"block"}).load().then(f=>{document.fonts.add(f);st.shdrOk=true;return true}).catch(()=>false);return st.shdr}
 function sheadHTML(s,glyph){
+  if(st.shdrOk)return `<div class="line shead real" role="heading" aria-label="سورة ${SURAHS[s-1]}"><span class="shg">${String.fromCharCode(SHDR_CP[s-1])}</span></div>`;
   const nm=glyph?`<span class="nm g">${glyph}</span>`:`<span class="nm t">سورة ${SURAHS[s-1]}</span>`;
   const fr=glyph||st.headGlyphs?`<span class="fl fr"></span>`:"",fl=glyph||st.headGlyphs?`<span class="fl fl2"></span>`:"";
   return `<div class="line shead" role="heading" aria-label="سورة ${SURAHS[s-1]}"><svg viewBox="0 0 370 46" preserveAspectRatio="none" aria-hidden="true"><path d="M18 3H352L367 23L352 43H18L3 23Z" fill="var(--cart-bg2)" stroke="var(--gold)" stroke-width="1.6"/><path d="M22 7H348L360 23L348 39H22L10 23Z" fill="none" stroke="var(--gold)" stroke-width=".8"/></svg><span class="rule"></span>${fr}${nm}${fl}<span class="rule"></span></div>`}
@@ -432,7 +441,9 @@ function runningHead(surahs,juz,rub){
 }
 // Scale the page font so the longest line exactly fills the width, as in the printed page.
 function fitLines(box){
-  box=box||$("#stage").querySelector(":scope>.page .lines");if(!box)return;const avail=box.clientWidth;let max=0;
+  box=box||$("#stage").querySelector(":scope>.page .lines");if(!box)return;
+  box.querySelectorAll(".shg").forEach(g=>{g.style.fontSize="";const w=g.getBoundingClientRect().width,W=box.clientWidth,H=g.parentNode.clientHeight;
+    if(w>0){const cur=parseFloat(getComputedStyle(g).fontSize);let k=W*.995/w;const hh=g.getBoundingClientRect().height;if(hh*k>H*1.25)k=H*1.25/hh;g.style.fontSize=(cur*k).toFixed(2)+"px"}});const avail=box.clientWidth;let max=0;
   box.querySelectorAll(".line:not(.shead):not(.basm)").forEach(l=>{let w=0;for(const c of l.children)w+=c.getBoundingClientRect().width;if(w>max)max=w});
   if(!max)return;const fs=parseFloat(box.style.fontSize)||pageFontSize();
   let nf=fs*(avail*0.99)/max;
@@ -612,6 +623,7 @@ $("#btnBooks").onclick=()=>{
 };
 window.addEventListener("resize",()=>{const l=$("#stage").querySelector(":scope>.page .lines");if(l){l.style.fontSize=pageFontSize()+"px";fitLines()}});
 
+loadShdr().then(ok=>{if(ok&&st.mode==="live"){const s=$("#stage"),t=s.scrollTop;st.slideFrom=0;render().then(()=>{s.scrollTop=t})}});
 loadData().then(()=>{if(st.only&&!DATA.books.some(b=>b.id===st.only))st.only=null;applyMarks();drawImams();render();toggleChrome(true);setTimeout(()=>toggleChrome(false),2500)});
 if("serviceWorker" in navigator&&location.protocol==="https:"&&!window.WAQF_DATA){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 })();
