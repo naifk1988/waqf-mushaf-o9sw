@@ -283,6 +283,8 @@ function alignCue(cue,words,type){
 const D=window.WAQF_DATA||null; let DATA=D;
 const st={page:Math.min(604,Math.max(1,store.get("page",2))),mode:window.FORCE_PREVIEW?"preview":null,pages:{},ayahWords:{},marks:store.get("marks",false),
   hidden:new Set(store.get("hidden",[])),only:store.get("only",null)};
+// the previous version hid the other imams when one was chosen; that choice now only drives the page signs, so clear it once
+if(!store.get("mig_only_v2",false)){st.hidden=new Set();store.set("hidden",[]);store.set("mig_only_v2",true)}
 let preview=window.TEXT_PREVIEW||null;
 
 async function loadData(){
