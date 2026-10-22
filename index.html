@@ -81,8 +81,9 @@ body:not(.chrome) .fbar.bot{transform:translateY(12px)}
 .w.tap{background:var(--hl);border-radius:4px}
 body.marks .w.has::after{content:"";position:absolute;left:50%;bottom:.08em;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--focus);opacity:.55}
 /* one imam chosen: his ruling is written above the word, like the pause signs of the printed mushaf */
-body.marks .w.has[data-m]::after{content:attr(data-m);bottom:auto;top:-.48em;width:auto;height:auto;margin:0;transform:translateX(-50%);background:none;border-radius:0;opacity:1;
-  font:700 .5em/1 var(--f-ui);color:var(--cc,var(--focus));white-space:nowrap;letter-spacing:0}
+body.marks .w.has[data-m]::after{content:attr(data-m);bottom:auto;top:-.62em;width:auto;height:auto;margin:0;transform:translateX(-50%);opacity:1;
+  font:700 .46em/1 var(--f-ui);color:#fff;background:var(--cc,var(--focus));border-radius:.5em;padding:.14em .32em .18em;white-space:nowrap;letter-spacing:0;
+  box-shadow:0 0 0 .1em var(--paper);z-index:2}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
 .chip-i{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border-radius:17px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
@@ -331,11 +332,11 @@ function setHeader(p,surahs,juz){
   $("#hdrMeta").textContent=`الصفحة ${ar(p)}`+(juz?` · الجزء ${ar(juz)}`:"");
   $("#pgIn").value=ar(p);$("#pgRange").value=p;$("#btnSave").setAttribute("aria-pressed",store.get("saved",0)===p);
 }
-function hasEntries(key,wi){return entriesFor(key).some(e=>e.w===wi)}
+function hasEntries(key,wi){return (st.only?(DATA.entries[key]||[]).filter(e=>e.b===st.only):entriesFor(key)).some(e=>e.w===wi)}
 // sign written above a word when a single imam is chosen
 const SIGN={lazim:"م",tam:"ت",kafi:"ك",hasan:"ح",weak:"ج",neg:"لا",ibtida:"ب",other:"ق"};
 function markAttr(key,wi){
-  if(!st.only)return "";const es=entriesFor(key).filter(e=>e.w===wi);if(!es.length)return "";
+  if(!st.only)return "";const es=(DATA.entries[key]||[]).filter(e=>e.b===st.only&&e.w===wi);if(!es.length)return "";
   const e=es.find(x=>x.type!=="ibtida")||es[0];const s=e.b==="habti"&&e.c!=="ibtida"?"صه":SIGN[e.c]||"ق";
   return ` data-m="${s}" style="--cc:var(--${e.c==="ibtida"?"frame":e.c})"`;
 }
@@ -452,6 +453,7 @@ const bk=id=>id==="madina"?MADINA_BOOK:(bookById(id)||{short:id,title:"",death:0
 const arLoc=s=>ar(String(s||"")).replace(/\//g,"/");
 let sheetState=null;
 function openAyah(key,sel){
+  if(st.only)curTab=st.only;
   const [s,a]=key.split(":").map(Number);
   const words=st.ayahWords[key]||[];computeWordIdx(key,words);
   const byW={};const unplaced=[];
@@ -560,11 +562,10 @@ function drawImams(){
   $("#onlyTag").textContent=b?`وقوف ${shortName(b)}`:"";
 }
 function chooseImam(id){
-  st.only=id;store.set("only",id);
-  st.hidden=new Set(id?DATA.books.map(b=>b.id).filter(x=>x!==id):[]);store.set("hidden",[...st.hidden]);
+  st.only=id;store.set("only",id);if(id)curTab=id;
   applyMarks();drawImams();toggleChrome(true);
   const s=$("#stage");const top=s.scrollTop;st.slideFrom=0;render().then(()=>{s.scrollTop=top});
-  if(id)toast(`تظهر الآن وقوف ${shortName(bookById(id))} فقط`);else toast("تظهر وقوف الأئمة جميعًا");
+  if(id)toast(`علامات ${shortName(bookById(id))} على الصفحة`);else toast("تظهر وقوف الأئمة جميعًا");
 }
 $("#onlyTag").onclick=()=>toggleChrome(true);
 
@@ -586,7 +587,6 @@ $("#btnBooks").onclick=()=>{
   ${DATA.coverage?`<p class="small">نطاق البيانات الحالية: ${esc(DATA.coverage)}.</p>`:""}</div>`;
   $("#shTop").innerHTML="";$("#shTitle").textContent="الكتب والأئمة";$("#shBody").innerHTML=h;openSheet();
   $("#shBody").querySelectorAll(".sw").forEach(c=>c.onchange=()=>{c.checked?st.hidden.delete(c.dataset.id):st.hidden.add(c.dataset.id);store.set("hidden",[...st.hidden]);
-    if(st.only){st.only=null;store.set("only",null);applyMarks();drawImams()}
     document.querySelectorAll(".w[data-k]").forEach(w=>{const i=+w.dataset.i;if(i>=0)w.classList.toggle("has",hasEntries(w.dataset.k,i))})});
 };
 window.addEventListener("resize",()=>{const l=$("#stage").querySelector(":scope>.page .lines");if(l){l.style.fontSize=pageFontSize()+"px";fitLines()}});
