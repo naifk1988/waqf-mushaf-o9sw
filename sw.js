@@ -1,5 +1,5 @@
 // Offline cache: app shell + data (network-first), mushaf pages and fonts (cache-first once fetched).
-const SHELL = "waqf-shell-v12", RUNTIME = "waqf-runtime-v2";
+const SHELL = "waqf-shell-v13", RUNTIME = "waqf-runtime-v2";
 const SHELL_FILES = ["./", "index.html", "manifest.webmanifest", "data/waqf.json", "data/text_preview.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -11,7 +11,7 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET") return;
-  const isRemote = /cdn\.jsdelivr\.net|static-cdn\.tarteel\.ai|fonts\.(googleapis|gstatic)\.com/.test(url.host)
+  const isRemote = /cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(url.host)
     || (url.origin === location.origin && url.pathname.includes("/data/q4/"));  // fonts and fixed page layouts never change
   if (isRemote) {
     e.respondWith(caches.open(RUNTIME).then(async c => {

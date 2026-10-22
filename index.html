@@ -122,9 +122,10 @@ body[data-hdr="4"] .shead{justify-content:space-between;padding:0 .3em;margin:.1
   border:1px solid var(--gold);outline:1px solid var(--gold);outline-offset:.12em;background:var(--cart-bg2)}
 body[data-hdr="4"] .shead .nm{color:var(--ink)}
 body[data-hdr="4"] .shead .fr::before{content:"\FAFD"}body[data-hdr="4"] .shead .fl2::before{content:"\FAFC"}
-.shead.real{background:none!important;box-shadow:none!important;outline:0!important;border:0!important;padding:0!important;overflow:visible}
-.shead.real::before{display:none!important}
-.shg{font-family:shdr;font-size:1.6em;line-height:1;white-space:nowrap;display:block}
+.shead.banner{background:url(img/surah_banner.webp) center/100% 100% no-repeat!important;box-shadow:none!important;outline:0!important;border:0!important;
+  padding:0!important;margin:.05em 0!important;height:auto!important;min-height:0!important;aspect-ratio:1400/165;width:100%;align-self:center}
+.shead.banner::before,.shead.banner svg,.shead.banner .rule,.shead.banner .fl{display:none!important}
+.shead.banner .nm.g{font-size:1.32em;color:#1f2a1c;transform:translateY(-.04em)}
 .basm.glyph{font-size:.92em}
 .page.q4 .basm span{font-size:1em}
 .qtr{color:var(--ink)}
@@ -376,14 +377,11 @@ async function render(){
   if(p!==st.page)return;clearTimeout(st.loadT);
   renderPreview(p);slideIn();
 }
-/* Surah header of the King Fahd Complex (QCF_SurahHeader_COLOR, published by QUL / Tarteel): one coloured glyph per surah,
-   frame and name together. If the font cannot be loaded, the gold cartouche below is used instead. */
-const SHDR_URL="https://static-cdn.tarteel.ai/qul/fonts/surah-names/surah-header/QCF_SurahHeader_COLOR-Regular.ttf";
-const SHDR_CP="fc45,fc46,fc47,fc4a,fc4b,fc4e,fc4f,fc51,fc52,fc53,fc55,fc56,fc58,fc5a,fc5b,fc5c,fc5d,fc5e,fc61,fc62,fc64,fb51,fb52,fb54,fb55,fb57,fb58,fb5a,fb5b,fb5d,fb5e,fb60,fb61,fb63,fb64,fb66,fb67,fb69,fb6a,fb6c,fb6d,fb6f,fb70,fb72,fb73,fb75,fb76,fb78,fb79,fb7b,fb7c,fb7e,fb7f,fb81,fb82,fb84,fb85,fb87,fb88,fb8a,fb8b,fb8d,fb8e,fb90,fb91,fb93,fb94,fb96,fb97,fb99,fb9a,fb9c,fb9d,fb9f,fba0,fba2,fba3,fba5,fba6,fba8,fba9,fbab,fbac,fbae,fbaf,fbb1,fbb2,fbb4,fbb5,fbb7,fbb8,fbba,fbbb,fbbd,fbbe,fbc0,fbc1,fbd3,fbd4,fbd6,fbd7,fbd9,fbda,fbdc,fbdd,fbdf,fbe0,fbe2,fbe3,fbe5,fbe6,fbe8,fbe9,fbeb".split(",").map(x=>parseInt(x,16));
-function loadShdr(){if(st.shdr)return st.shdr;
-  st.shdr=new FontFace("shdr",`url(${SHDR_URL}) format("truetype")`,{display:"block"}).load().then(f=>{document.fonts.add(f);st.shdrOk=true;return true}).catch(()=>false);return st.shdr}
+/* Surah header: the green arabesque banner of the Madinah 1441 print (img/surah_banner.webp, from the MIT-licensed
+   qcf_quran_plus project), with the surah name in the calligraphic QCF4 header glyph in its central cartouche. */
 function sheadHTML(s,glyph){
-  if(st.shdrOk)return `<div class="line shead real" role="heading" aria-label="سورة ${SURAHS[s-1]}"><span class="shg">${String.fromCharCode(SHDR_CP[s-1])}</span></div>`;
+  if(glyph||st.headGlyphs){const g=glyph||String.fromCharCode(0xF100+s-1);
+    return `<div class="line shead banner" role="heading" aria-label="سورة ${SURAHS[s-1]}"><span class="nm g">${g}</span></div>`}
   const nm=glyph?`<span class="nm g">${glyph}</span>`:`<span class="nm t">سورة ${SURAHS[s-1]}</span>`;
   const fr=glyph||st.headGlyphs?`<span class="fl fr"></span>`:"",fl=glyph||st.headGlyphs?`<span class="fl fl2"></span>`:"";
   return `<div class="line shead" role="heading" aria-label="سورة ${SURAHS[s-1]}"><svg viewBox="0 0 370 46" preserveAspectRatio="none" aria-hidden="true"><path d="M18 3H352L367 23L352 43H18L3 23Z" fill="var(--cart-bg2)" stroke="var(--gold)" stroke-width="1.6"/><path d="M22 7H348L360 23L348 39H22L10 23Z" fill="none" stroke="var(--gold)" stroke-width=".8"/></svg><span class="rule"></span>${fr}${nm}${fl}<span class="rule"></span></div>`}
@@ -442,8 +440,7 @@ function runningHead(surahs,juz,rub){
 // Scale the page font so the longest line exactly fills the width, as in the printed page.
 function fitLines(box){
   box=box||$("#stage").querySelector(":scope>.page .lines");if(!box)return;
-  box.querySelectorAll(".shg").forEach(g=>{g.style.fontSize="";const w=g.getBoundingClientRect().width,W=box.clientWidth,H=g.parentNode.clientHeight;
-    if(w>0){const cur=parseFloat(getComputedStyle(g).fontSize);let k=W*.995/w;const hh=g.getBoundingClientRect().height;if(hh*k>H*1.25)k=H*1.25/hh;g.style.fontSize=(cur*k).toFixed(2)+"px"}});const avail=box.clientWidth;let max=0;
+  const avail=box.clientWidth;let max=0;
   box.querySelectorAll(".line:not(.shead):not(.basm)").forEach(l=>{let w=0;for(const c of l.children)w+=c.getBoundingClientRect().width;if(w>max)max=w});
   if(!max)return;const fs=parseFloat(box.style.fontSize)||pageFontSize();
   let nf=fs*(avail*0.99)/max;
@@ -623,7 +620,6 @@ $("#btnBooks").onclick=()=>{
 };
 window.addEventListener("resize",()=>{const l=$("#stage").querySelector(":scope>.page .lines");if(l){l.style.fontSize=pageFontSize()+"px";fitLines()}});
 
-loadShdr().then(ok=>{if(ok&&st.mode==="live"){const s=$("#stage"),t=s.scrollTop;st.slideFrom=0;render().then(()=>{s.scrollTop=t})}});
 loadData().then(()=>{if(st.only&&!DATA.books.some(b=>b.id===st.only))st.only=null;applyMarks();drawImams();render();toggleChrome(true);setTimeout(()=>toggleChrome(false),2500)});
 if("serviceWorker" in navigator&&location.protocol==="https:"&&!window.WAQF_DATA){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 })();
