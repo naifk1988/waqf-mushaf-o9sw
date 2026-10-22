@@ -13,7 +13,7 @@
 /* Layout: one mushaf page fills the screen; tapping an ayah raises a bottom sheet that compares the imams word by word. */
 :root{
   --paper:#ffffff; --paper-edge:#f4f1ea; --ink:#111111; --ink-soft:#5d5442; --cart:#7fae96; --cart-bg:#eef6f0;
-  --frame:#14463f; --bar:#4f7d4b; --gold:#a7822e; --sheet:#fffdf7; --line:#e3d8bb;
+  --frame:#14463f; --bar:#4f7d4b; --gold:#a7822e; --cart-bg2:#fdfaf1; --sheet:#fffdf7; --line:#e3d8bb;
   --hl:rgba(31,107,96,.13); --hl-ink:#0f6b5c; --focus:#1f6b60;
   --tam:#14634f; --kafi:#2c6fa3; --hasan:#8a6a12; --weak:#9a5a2a; --neg:#a3322a; --lazim:#5b2a86; --other:#6b6458;
   --f-quran:"Amiri Quran","Amiri",serif;
@@ -23,13 +23,13 @@
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#141412; --paper-edge:#1d1c19; --ink:#ece6d6; --cart:#4f7d68; --cart-bg:#1b2621; --ink-soft:#b5aa90;
-  --frame:#4fa393; --bar:#2f4f2e; --gold:#d3b06a; --sheet:#22201a; --line:#3a3528;
+  --frame:#4fa393; --bar:#2f4f2e; --gold:#d3b06a; --cart-bg2:#1f1d18; --sheet:#22201a; --line:#3a3528;
   --hl:rgba(108,194,177,.16); --hl-ink:#7fd6c4; --focus:#6cc2b1;
   --tam:#4fbf9c; --kafi:#6aa9dc; --hasan:#d6b55a; --weak:#d89160; --neg:#e07a70; --lazim:#b48ae0; --other:#a59d8c;
   color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#141412; --paper-edge:#1d1c19; --ink:#ece6d6; --cart:#4f7d68; --cart-bg:#1b2621; --ink-soft:#b5aa90;
-  --frame:#4fa393; --bar:#2f4f2e; --gold:#d3b06a; --sheet:#22201a; --line:#3a3528;
+  --frame:#4fa393; --bar:#2f4f2e; --gold:#d3b06a; --cart-bg2:#1f1d18; --sheet:#22201a; --line:#3a3528;
   --hl:rgba(108,194,177,.16); --hl-ink:#7fd6c4; --focus:#6cc2b1;
   --tam:#4fbf9c; --kafi:#6aa9dc; --hasan:#d6b55a; --weak:#d89160; --neg:#e07a70; --lazim:#b48ae0; --other:#a59d8c;
   color-scheme:dark}
@@ -95,22 +95,37 @@ body.marks .w.has[data-m]::after{content:attr(data-m);bottom:auto;top:-.62em;wid
   background:var(--bar);color:#fff;border-radius:12px;padding:3px 10px;opacity:.85;transition:opacity .2s}
 body.chrome .onlyTag,.onlyTag:empty{opacity:0;pointer-events:none}
 .end{color:var(--ink)}
-/* surah header: ornamental green band with a pale cartouche and two rosettes (original design in the mushaf style) */
-.shead{justify-content:center;align-items:center;position:relative;margin:.06em 0;height:1.6em;min-height:1.6em!important;padding:0;
-  border:.07em solid #1f6b3e;outline:.03em solid #1f6b3e;outline-offset:.05em;border-radius:.1em;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' fill='%23338a55'/%3E%3Cpath d='M14 3c3 4 3 7 0 11c-3-4-3-7 0-11zM14 25c-3-4-3-7 0-11c3 4 3 7 0 11zM3 14c4-3 7-3 11 0c-4 3-7 3-11 0zM25 14c-4 3-7 3-11 0c4-3 7-3 11 0z' fill='%2389cf98'/%3E%3Ccircle cx='14' cy='14' r='2.2' fill='%23f2c7d4'/%3E%3Ccircle cx='0' cy='0' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='28' cy='0' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='0' cy='28' r='3' fill='%23bfe6c6'/%3E%3Ccircle cx='28' cy='28' r='3' fill='%23bfe6c6'/%3E%3C/svg%3E") center/1.05em 1.05em repeat}
-.shead .nm{position:relative;z-index:1;font-family:var(--f-display);font-weight:700;font-size:.8em;line-height:1;color:#123b26;
-  background:#f5fbf2;border:.08em solid #1f6b3e;border-radius:2em;padding:.18em 2em .3em;box-shadow:0 0 0 .14em #f5fbf2 inset}
-.shead .ro{position:absolute;top:50%;width:1.05em;height:1.05em;margin-top:-.525em;border-radius:50%;z-index:1;
-  background:radial-gradient(circle,#c2185b 0 12%,#f8bbd0 13% 30%,#fff 31% 40%,#e57399 41% 62%,#f5fbf2 63% 72%,#1f6b3e 73% 78%,#f5fbf2 79%)}
-.shead .ro.r1{right:6%}.shead .ro.r2{left:6%}
 .basm{justify-content:center;font-family:var(--f-quran)}
+/* surah header — four styles, chosen with body[data-hdr]; the name is the calligraphic glyph of the 1441 print, flanked by its own flourishes */
+.shead{justify-content:center;align-items:center;position:relative;margin:.04em 0;height:1.62em;min-height:1.62em!important;padding:0;gap:.12em}
+.shead .nm{position:relative;z-index:1;line-height:1;white-space:nowrap}
+.shead .nm.t{font-family:var(--f-display);font-weight:700;font-size:.7em}
+.shead .nm.g{font-family:q4f0;font-size:1.3em}
+.shead .fl{position:relative;z-index:1;font-family:q4f0;font-size:1.15em;line-height:1;color:var(--gold)}
+.shead .rule,.shead svg{display:none}
+.shead .fr::before{content:"\FAE5"}.shead .fl2::before{content:"\FAE4"}
+/* 1 gold cartouche with pointed ends */
+body[data-hdr="1"] .shead svg{display:block;position:absolute;inset:0;width:100%;height:100%}
+body[data-hdr="1"] .shead .nm{color:#3b2a10}
+/* 2 calligraphy and flourishes with double rules, no frame */
+body[data-hdr="2"] .shead .rule{display:block;flex:1;height:.2em;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+body[data-hdr="2"] .shead .nm{color:var(--ink);font-size:1.38em}
+body[data-hdr="2"] .shead .fr::before{content:"\FAF5"}body[data-hdr="2"] .shead .fl2::before{content:"\FAF4"}
+/* 3 calm green band with gold hairline */
+body[data-hdr="3"] .shead{background:#2f5d45;border-radius:.24em;box-shadow:inset 0 0 0 .12em #2f5d45,inset 0 0 0 .16em #d9c27e}
+body[data-hdr="3"] .shead::before{content:"";position:absolute;left:25%;right:25%;top:.2em;bottom:.2em;background:#fbf7ea;border:1.5px solid #d9c27e;border-radius:1em}
+body[data-hdr="3"] .shead .nm{color:#2f5d45;font-size:1.15em}body[data-hdr="3"] .shead .nm.t{font-size:.66em}
+body[data-hdr="3"] .shead .fl{font-size:.85em}
+body[data-hdr="3"] .shead .fr::before{content:"\FAE7"}body[data-hdr="3"] .shead .fl2::before{content:"\FAE6"}
+/* 4 simple double-line frame, flourishes at the ends */
+body[data-hdr="4"] .shead{justify-content:space-between;padding:0 .3em;margin:.18em .16em;height:1.5em;min-height:1.5em!important;
+  border:1px solid var(--gold);outline:1px solid var(--gold);outline-offset:.12em;background:var(--cart-bg2)}
+body[data-hdr="4"] .shead .nm{color:var(--ink)}
+body[data-hdr="4"] .shead .fr::before{content:"\FAFD"}body[data-hdr="4"] .shead .fl2::before{content:"\FAFC"}
 .basm.glyph{font-size:.92em}
-.shead .nm.g{font-weight:400;font-size:1em;padding:0 1.1em;height:1.25em;display:flex;align-items:center;overflow:hidden}
-.shead .nm.g span{font-size:1.15em;line-height:1;color:#123b26;transform:translateY(-.05em)}
 .page.q4 .basm span{font-size:1em}
 .qtr{color:var(--ink)}
-.page>.shead{font-size:26px;margin:6px 0}
+.page>.shead{font-size:24px;margin:6px 0}
 .flow{direction:rtl;text-align:justify;text-align-last:center;font-family:var(--f-quran);line-height:2.3;font-size:22px}
 .flow .num{font-family:var(--f-display);font-size:.78em;margin:0 .12em;display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;
   border:1.5px solid var(--cart);border-radius:50%;line-height:1;vertical-align:.15em;background:var(--cart-bg)}
@@ -359,7 +374,10 @@ async function render(){
   if(p!==st.page)return;clearTimeout(st.loadT);
   renderPreview(p);slideIn();
 }
-function sheadHTML(s,glyph){return `<div class="line shead" role="heading" aria-label="سورة ${SURAHS[s-1]}"><span class="ro r1"></span><span class="nm${glyph?" g":""}">${glyph?`<span style="font-family:q4f0">${glyph}</span>`:`سورة ${SURAHS[s-1]}`}</span><span class="ro r2"></span></div>`}
+function sheadHTML(s,glyph){
+  const nm=glyph?`<span class="nm g">${glyph}</span>`:`<span class="nm t">سورة ${SURAHS[s-1]}</span>`;
+  const fr=glyph||st.headGlyphs?`<span class="fl fr"></span>`:"",fl=glyph||st.headGlyphs?`<span class="fl fl2"></span>`:"";
+  return `<div class="line shead" role="heading" aria-label="سورة ${SURAHS[s-1]}"><svg viewBox="0 0 370 46" preserveAspectRatio="none" aria-hidden="true"><path d="M18 3H352L367 23L352 43H18L3 23Z" fill="var(--cart-bg2)" stroke="var(--gold)" stroke-width="1.6"/><path d="M22 7H348L360 23L348 39H22L10 23Z" fill="none" stroke="var(--gold)" stroke-width=".8"/></svg><span class="rule"></span>${fr}${nm}${fl}<span class="rule"></span></div>`}
 function prefetch(p){[p+1,p-1,p+2,p-2].forEach(q=>{if(q>=1&&q<=604&&!st.pages[q])fetchLivePage(q).catch(()=>{})})}
 function renderLive(pg,p){
   const r=pageHTML(pg,p);const stage=$("#stage");
@@ -548,6 +566,7 @@ function applyTheme(t){if(t)document.documentElement.dataset.theme=t;else delete
   const dark=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;$("#btnTheme").setAttribute("aria-pressed",dark)}
 $("#btnTheme").onclick=()=>{const dark=$("#btnTheme").getAttribute("aria-pressed")==="true";const t=dark?"light":"dark";store.set("theme",t);applyTheme(t)};
 applyTheme(store.get("theme",null));
+document.body.dataset.hdr="1"; // chosen style: gold cartouche (styles 2–4 kept in the CSS)
 $("#btnMarks").onclick=()=>{st.marks=!st.marks;store.set("marks",st.marks);applyMarks()};
 function applyMarks(){document.body.classList.toggle("marks",st.marks||!!st.only);$("#btnMarks").setAttribute("aria-pressed",st.marks||!!st.only)}
 // imam chooser: "الكل" shows every imam; choosing one shows only his pauses, on the page and in the ayah panel
