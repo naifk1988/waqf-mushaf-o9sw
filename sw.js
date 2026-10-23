@@ -1,5 +1,5 @@
 // Offline cache: app shell + data (network-first), mushaf pages and fonts (cache-first once fetched).
-const SHELL = "waqf-shell-v13", RUNTIME = "waqf-runtime-v2";
+const SHELL = "waqf-shell-v14", RUNTIME = "waqf-runtime-v2";
 const SHELL_FILES = ["./", "index.html", "manifest.webmanifest", "data/waqf.json", "data/text_preview.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
