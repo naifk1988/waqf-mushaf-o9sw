@@ -41,7 +41,7 @@ def similar(a, b):
 
 
 def align(marks, words):
-    ptr, out, miss = 0, [], []
+    ptr, out, miss = 0, [], []  # marks are in reading order; ptr only moves forward
     for m in marks:
         c0 = norm(m.get("context") or m.get("word"))
         c0 = re.sub(r"^بسم الله الرحمن الرحيم ?", "", c0) or norm(m.get("word"))
@@ -57,6 +57,12 @@ def align(marks, words):
             if b2 is not None and s2 >= 0.8:
                 best, bscore = b2, s2
         if best is None or bscore < 0.62:
+            # a mark added in the second reading may sit just before the previous one: look back a little
+            b3, s3 = scan(ctx, words, max(0, ptr - 40), range(max(0, ptr - 40), ptr))
+            if b3 is not None and s3 >= 0.8:
+                a, i, w, _ = words[b3]
+                out.append((a, i, " ".join(x[2] for x in words[max(0, b3 - 1):b3 + 1] if x[0] == a), m))
+                continue
             miss.append(m)
             continue
         a, i, w, _ = words[best]
@@ -101,7 +107,14 @@ def main():
         ms = [m for m in marks if int(m.get("surah", 2)) == surah]
         got, miss = align(ms, flat(surah))
         misses += miss
+        ORD = {2: "الثاني", 3: "الثالث", 4: "الرابع"}
         for a, i, cue, m in got:
+            # repeated phrase in the same ayah: say which occurrence (the app reads «(الثاني)» etc.)
+            ws = [skel(w) for w in TEXT[str(surah)][[v["a"] for v in TEXT[str(surah)]].index(a)]["t"].split()]
+            k = [skel(t) for t in cue.split()]
+            n = sum(1 for j in range(len(k) - 1, i + 1) if ws[j - len(k) + 1:j + 1] == k)
+            if n >= 2 and n in ORD:
+                cue = f"{cue} ({ORD[n]})"
             entries.append({
                 "s": surah, "a": a, "cue": DIAC.sub("", cue), "type": "waqf",
                 "ruling": "وقف", "raw": "صه",
