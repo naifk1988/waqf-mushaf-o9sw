@@ -86,6 +86,17 @@ body.marks .w.has::after{content:"";position:absolute;left:50%;bottom:.08em;widt
 body.marks .w.has[data-m]::after{content:attr(data-m);bottom:auto;top:-.62em;width:auto;height:auto;margin:0;transform:translateX(-50%);opacity:1;
   font:700 .46em/1 var(--f-ui);color:#fff;background:var(--cc,var(--focus));border-radius:.5em;padding:.14em .32em .18em;white-space:nowrap;letter-spacing:0;
   box-shadow:0 0 0 .1em var(--paper);z-index:2}
+/* all imams: number of imams pausing on the word, darker = more agreement */
+body.marks .w.has[data-n]::after{content:attr(data-n);bottom:auto;top:-.5em;width:auto;height:auto;min-width:1.15em;margin:0;transform:translateX(-50%);opacity:1;
+  font:700 .4em/1.15 var(--f-ui);color:#fff;text-align:center;border-radius:1em;padding:.08em .22em;box-shadow:0 0 0 .1em var(--paper);z-index:2;background:var(--agc)}
+body.marks .w.has[data-lv="1"]{--agc:#9cb8a3}body.marks .w.has[data-lv="2"]{--agc:#6f9c80}body.marks .w.has[data-lv="3"]{--agc:#3f7d5c}
+body.marks .w.has[data-lv="4"]{--agc:#1f6141}body.marks .w.has[data-lv="5"]{--agc:#0d4029}
+.chips.grades .chip-i{height:30px;font-size:13px;padding:0 11px}
+.qtag{display:inline-block;font-size:11.5px;font-weight:700;color:#7a4d00;background:#fff1cc;border:1px solid #f0cf7a;border-radius:8px;padding:2px 8px;margin-top:4px}
+.qnote{margin:6px 16px 0;font-size:12.5px;color:#7a4d00;background:#fff7e0;border:1px dashed #f0cf7a;border-radius:9px;padding:6px 10px}
+.qlist .qi{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:right;padding:10px 4px;border-bottom:1px solid var(--line);font-size:15px}
+.qlist .qi b{font-family:var(--f-quran);font-weight:400;font-size:19px}
+.qlist .qi span{color:var(--ink-soft);font-size:12.5px;white-space:nowrap}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
 .chip-i{flex:none;display:flex;align-items:center;gap:6px;height:34px;padding:0 12px 0 10px;border-radius:17px;background:rgba(255,255,255,.14);color:#fff;font-size:14px;font-weight:600;white-space:nowrap}
@@ -236,6 +247,7 @@ body[data-hdr="4"] .shead .fr::before{content:"\FAFD"}body[data-hdr="4"] .shead 
 </header>
 <nav class="fbar bot" aria-label="التنقل بين الصفحات">
   <div class="chips" id="imams" role="group" aria-label="اختر إمام الوقف"></div>
+  <div class="chips grades" id="grades" role="group" aria-label="درجة الوقف"></div>
   <div class="mleg" id="mleg" hidden></div>
   <input type="range" id="pgRange" min="1" max="604" step="1" aria-label="الانتقال إلى صفحة">
   <div class="row">
@@ -302,7 +314,7 @@ function alignCue(cue,words,type){
 /* ---------- state ---------- */
 const D=window.WAQF_DATA||null; let DATA=D;
 const st={page:Math.min(604,Math.max(1,store.get("page",2))),mode:window.FORCE_PREVIEW?"preview":null,pages:{},ayahWords:{},marks:store.get("marks",false),
-  hidden:new Set(store.get("hidden",[])),only:store.get("only",null)};
+  hidden:new Set(store.get("hidden",[])),only:store.get("only",null),grade:store.get("grade",null)};
 // the previous version hid the other imams when one was chosen; that choice now only drives the page signs, so clear it once
 if(!store.get("mig_only_v2",false)){st.hidden=new Set();store.set("hidden",[]);store.set("mig_only_v2",true)}
 let preview=window.TEXT_PREVIEW||null;
@@ -354,11 +366,25 @@ function setHeader(p,surahs,juz){
   $("#hdrMeta").textContent=`الصفحة ${ar(p)}`+(juz?` · الجزء ${ar(juz)}`:"");
   $("#pgIn").value=ar(p);$("#pgRange").value=p;$("#btnSave").setAttribute("aria-pressed",store.get("saved",0)===p);
 }
-function hasEntries(key,wi){return (st.only?(DATA.entries[key]||[]).filter(e=>e.b===st.only):entriesFor(key)).some(e=>e.w===wi)}
+// entries that count for the signs on the page: chosen imam (or all shown imams), chosen grade
+const GRADE_OK={lazim:c=>c==="lazim",tam:c=>c==="tam"||c==="lazim",kafi:c=>c==="kafi",hasan:c=>c==="hasan",neg:c=>c==="neg"};
+function marksFor(key,wi){
+  let es=(DATA.entries[key]||[]).filter(e=>e.w===wi);
+  es=st.only?es.filter(e=>e.b===st.only):es.filter(e=>!st.hidden.has(e.b));
+  if(st.grade)es=es.filter(e=>e.type!=="ibtida"&&GRADE_OK[st.grade](e.c));
+  return es;
+}
+function hasEntries(key,wi){return marksFor(key,wi).length>0}
 // sign written above a word when a single imam is chosen
 const SIGN={lazim:"م",tam:"ت",kafi:"ك",hasan:"ح",weak:"ج",neg:"لا",ibtida:"ب",other:"ق"};
 function markAttr(key,wi){
-  if(!st.only)return "";const es=(DATA.entries[key]||[]).filter(e=>e.b===st.only&&e.w===wi);if(!es.length)return "";
+  const all=marksFor(key,wi);if(!all.length)return "";
+  if(!st.only){ // all imams: how many of them pause on this word (agreement)
+    const pause=all.filter(e=>e.type!=="ibtida"&&(st.grade==="neg"||e.c!=="neg"));
+    const n=new Set(pause.map(e=>e.b)).size;if(!n)return "";
+    return ` data-n="${ar(n)}" data-lv="${Math.min(n,5)}"`;
+  }
+  const es=all;
   const e=es.find(x=>x.type!=="ibtida")||es[0];const s=e.b==="habti"&&e.c!=="ibtida"?"صه":SIGN[e.c]||"ق";
   return ` data-m="${s}" style="--cc:var(--${e.c==="ibtida"?"frame":e.c})"`;
 }
@@ -411,8 +437,9 @@ function pageHTML(pg,p){
     row.forEach(it=>{const [t,ch,key,pos]=it;const f=fo(it);const sty=f!=null?` style="font-family:q4f${f}"`:"";
       if(t==="q"){html+=`<span class="qtr"${sty}>${ch}</span>`;return}
       if(t==="e"){html+=`<span class="w end" data-k="${key}" data-i="-1"${sty}>${ch}</span>`;return}
-      const wi=pos-1;const ma=markAttr(key,wi);const st2=ma&&f!=null?ma.replace('style="','style="font-family:q4f'+f+';'):(ma||sty);
-      html+=`<span class="w${hasEntries(key,wi)?" has":""}" data-k="${key}" data-i="${wi}"${ma?st2:sty}>${ch}</span>`;
+      const wi=pos-1;const ma=markAttr(key,wi);
+      const at=!ma?sty:ma.includes('style="')?(f!=null?ma.replace('style="','style="font-family:q4f'+f+';'):ma):ma+sty;
+      html+=`<span class="w${hasEntries(key,wi)?" has":""}" data-k="${key}" data-i="${wi}"${at}>${ch}</span>`;
     });
     html+=`</div>`;
   });
@@ -507,13 +534,13 @@ function drawSheet(){
   if(!curTab||!books.find(b=>b.id===curTab)||!cnt[curTab])curTab=(books.find(b=>cnt[b.id])||books[0]||{}).id;
   let top=`<div class="tayah">${words.map(esc).join(" ")} <span class="an">﴿${ar(a)}﴾</span></div><div class="tabs">`;
   books.forEach(b=>{top+=`<button class="tab${b.id===curTab?" on":""}${cnt[b.id]?"":" zero"}" data-tab="${b.id}">${esc(b.short)} <b>${ar(cnt[b.id]||0)}</b></button>`});
-  top+=`</div>`;$("#shTop").innerHTML=top;
+  top+=`</div>`;if(all.some(([i,e])=>e.q))top+=`<div class="qnote">في هذه الآية وقوف يختلف حكمها باختلاف القراءة؛ اقرأ تعليل كل إمام لتعرف القراءة التي بنى عليها.</div>`;$("#shTop").innerHTML=top;
   const b=bk(curTab);const mine=all.filter(([i,e])=>e.b===curTab).sort((x,y)=>(x[0]<0?999:x[0])-(y[0]<0?999:y[0]));
   let h=`<p class="tnote">${esc(b.title)} — ${esc(b.short)}${b.death?` (ت ${ar(b.death)}هـ)`:""}</p>`;
   if(!mine.length)h+=`<div class="empty">لم يذكر ${esc(b.short)} وقفًا في هذه الآية.</div>`;
   const groupsW=[];mine.forEach(([i,e])=>{const k=i>=0?"w"+i:"c"+e.cue;let g=groupsW.find(x=>x.k===k);if(!g){g={k,i,word:i>=0?words[i]:e.cue,es:[]};groupsW.push(g)}g.es.push(e)});
   groupsW.forEach(g=>{
-    h+=`<div class="wc"><div class="top"><span class="q">${esc(g.word)}</span><span class="rules">${g.es.map((e,j)=>`<span class="rule c-${e.c}">${j?"وقيل: ":""}${esc((e.type==="ibtida"?"ابتداء: ":"")+(e.r||CAT_LABEL[e.c]))}</span>`).join("")}</span></div>`;
+    h+=`<div class="wc"><div class="top"><span class="q">${esc(g.word)}</span><span class="rules">${g.es.map((e,j)=>`<span class="rule c-${e.c}">${j?"وقيل: ":""}${esc((e.type==="ibtida"?"ابتداء: ":"")+(e.r||CAT_LABEL[e.c]))}</span>`).join("")}${g.es.some(e=>e.q)?`<span class="qtag">يختلف بالقراءة</span>`:""}</span></div>`;
     g.es.forEach((e,j)=>{
       const meta=[];if(e.raw&&e.raw!==e.r)meta.push(`لفظه: «${esc(e.raw)}»`);if(e.who)meta.push(`منسوب إلى: ${esc(e.who)}`);if(e.note)meta.push(`ملاحظة الاستخراج: ${esc(e.note)}`);
       if(e.reason||meta.length)h+=`<div class="why">${e.reason?esc(e.reason):""}${meta.length?`<div class="ex">${meta.join(" · ")}</div>`:""}</div>`});
@@ -577,7 +604,7 @@ function applyTheme(t){if(t)document.documentElement.dataset.theme=t;else delete
 $("#btnTheme").onclick=()=>{const dark=$("#btnTheme").getAttribute("aria-pressed")==="true";const t=dark?"light":"dark";store.set("theme",t);applyTheme(t)};
 applyTheme(store.get("theme",null));
 document.body.dataset.hdr="1"; // chosen style: gold cartouche (styles 2–4 kept in the CSS)
-$("#btnMarks").onclick=()=>{st.marks=!st.marks;store.set("marks",st.marks);applyMarks()};
+$("#btnMarks").onclick=()=>{st.marks=!st.marks;store.set("marks",st.marks);applyMarks();drawImams()};
 function applyMarks(){document.body.classList.toggle("marks",st.marks||!!st.only);$("#btnMarks").setAttribute("aria-pressed",st.marks||!!st.only)}
 // imam chooser: "الكل" shows every imam; choosing one shows only his pauses, on the page and in the ayah panel
 const ICON={dani:"د",sajawandi:"س",ansari:"ز",habti:"هـ",ashmuni:"ش"};
@@ -587,10 +614,15 @@ function drawImams(){
   $("#imams").innerHTML=`<button class="chip-i" data-id="" aria-pressed="${!st.only}"><i>✦</i>الكل</button>`+
     books.map(b=>`<button class="chip-i" data-id="${esc(b.id)}" aria-pressed="${st.only===b.id}"><i>${ICON[b.id]||esc(b.short[0])}</i>${esc(shortName(b))}</button>`).join("");
   $("#imams").querySelectorAll(".chip-i").forEach(c=>c.onclick=()=>chooseImam(c.dataset.id||null));
+  const G=[["","كل الدرجات"],["lazim","لازم"],["tam","تام"],["kafi","كافٍ"],["hasan","حسن/جائز"],["neg","لا يوقف"]];
+  $("#grades").innerHTML=G.map(([g,l])=>`<button class="chip-i" data-g="${g}" aria-pressed="${(st.grade||"")===g}">${l}</button>`).join("");
+  $("#grades").querySelectorAll(".chip-i").forEach(c=>c.onclick=()=>chooseGrade(c.dataset.g||null));
   const b=st.only&&bookById(st.only);
-  $("#mleg").hidden=!b;
+  $("#mleg").hidden=!(b||st.marks||st.grade);
+  if(!b)$("#mleg").textContent="الرقم فوق الكلمة: عدد الأئمة الذين وقفوا عليها، وكلما اشتد اللون زاد الاتفاق"+(st.grade?"، على الدرجة المختارة فقط":"")+".";
   if(b)$("#mleg").textContent=b.id==="habti"?"تظهر علامة «صه» فوق كل موضع وقف عند الهبطي.":"الرموز فوق الكلمات: ت تام · ك كافٍ · ح حسن/جائز · م لازم · ج مجوَّز لضرورة · لا لا يوقف · ب ابتداء · ق وقف بلا درجة";
-  $("#onlyTag").textContent=b?`وقوف ${shortName(b)}`:"";
+  const gl={lazim:"اللازم",tam:"التام",kafi:"الكافي",hasan:"الحسن",neg:"«لا يوقف»"}[st.grade];
+  $("#onlyTag").textContent=b||gl?`${b?"وقوف "+shortName(b):"الأئمة"}${gl?" · "+gl:""}`:"";
 }
 function chooseImam(id){
   st.only=id;store.set("only",id);if(id)curTab=id;
@@ -599,15 +631,33 @@ function chooseImam(id){
   if(id)toast(`علامات ${shortName(bookById(id))} على الصفحة`);else toast("تظهر وقوف الأئمة جميعًا");
 }
 $("#onlyTag").onclick=()=>toggleChrome(true);
+function chooseGrade(g){
+  st.grade=g;store.set("grade",g);if(g&&!st.marks){st.marks=true;store.set("marks",true)}
+  applyMarks();drawImams();toggleChrome(true);
+  const s=$("#stage");const top=s.scrollTop;st.slideFrom=0;render().then(()=>{s.scrollTop=top});
+}
 
 $("#btnIndex").onclick=()=>{
   const cov=new Set(DATA.surahs_covered||[]);
   let h=`<div class="panel"><div class="slist">`;
   SURAHS.forEach((n,i)=>{h+=`<button class="sitem${cov.has(i+1)?" cov":""}" data-p="${SPAGE[i]}"><span class="no">${ar(i+1)}</span><span class="nm">${n}</span><span class="pg">${ar(SPAGE[i])}</span></button>`});
-  h+=`</div><p class="small">السور المؤطرة بالذهبي فيها وقوف مستخرجة حتى الآن.</p></div>`;
+  h+=`</div><button class="sitem cov" id="qOpen" style="width:100%;margin-top:12px;justify-content:center">مواضع يختلف فيها الوقف باختلاف القراءة</button></div>`;
   $("#shTop").innerHTML="";$("#shTitle").textContent="فهرس السور";$("#shBody").innerHTML=h;openSheet();
-  $("#shBody").querySelectorAll(".sitem").forEach(b=>b.onclick=()=>{st.page=+b.dataset.p;closeSheet();render()});
+  $("#shBody").querySelectorAll(".sitem[data-p]").forEach(b=>b.onclick=()=>{st.page=+b.dataset.p;closeSheet();render()});
+  $("#qOpen").onclick=openQIndex;
 };
+async function openQIndex(){
+  let q=st.qidx;if(!q){try{q=st.qidx=await (await fetch("data/qidx.json")).json()}catch(e){toast("تعذر تحميل الفهرس");return}}
+  const nm=Object.fromEntries(DATA.books.map(b=>[b.id,shortName(b)]));
+  let h=`<div class="panel"><p class="small">${ar(q.length)} موضعًا ذكر فيها الأئمة أن الوقف يتغيّر بحسب القراءة. اضغط الموضع لتفتح الآية.</p><div class="qlist">`;
+  let last=0;
+  q.forEach(([k,p,cue,bs])=>{const s=+k.split(":")[0];if(s!==last){h+=`<h4>سورة ${SURAHS[s-1]}</h4>`;last=s}
+    h+=`<button class="qi" data-k="${k}" data-p="${p}"><b>${esc(cue)}</b><span>الآية ${ar(+k.split(":")[1])} · ${bs.map(b=>nm[b]||b).join("، ")}</span></button>`});
+  h+=`</div></div>`;
+  $("#shTop").innerHTML="";$("#shTitle").textContent="الوقف واختلاف القراءات";$("#shBody").innerHTML=h;$("#shBody").scrollTop=0;openSheet();
+  $("#shBody").querySelectorAll(".qi").forEach(b=>b.onclick=async()=>{const k=b.dataset.k;closeSheet();st.page=+b.dataset.p||st.page;await render();
+    const el=document.querySelector(`.w[data-k="${k}"]`);if(el){document.querySelectorAll(`.w[data-k="${k}"]`).forEach(x=>x.classList.add("hl"));openAyah(k,-1)}});
+}
 $("#btnBooks").onclick=()=>{
   const books=DATA.books.slice().sort((a,b)=>a.death-b.death);
   let h=`<div class="panel"><p class="small">اختر الأئمة الذين تظهر وقوفهم عند الضغط على الآية. الترتيب بحسب سنة الوفاة.</p><div class="blist">`;

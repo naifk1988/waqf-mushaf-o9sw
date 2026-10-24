@@ -1,6 +1,6 @@
 // Offline cache: app shell + data (network-first), mushaf pages and fonts (cache-first once fetched).
-const SHELL = "waqf-shell-v15", RUNTIME = "waqf-runtime-v2";
-const SHELL_FILES = ["./", "index.html", "manifest.webmanifest", "data/waqf.json", "data/text_preview.json", "icon-192.png", "icon-512.png"];
+const SHELL = "waqf-shell-v16", RUNTIME = "waqf-runtime-v2";
+const SHELL_FILES = ["./", "index.html", "manifest.webmanifest", "data/waqf.json", "data/qidx.json", "data/text_preview.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(SHELL).then(c => c.addAll(SHELL_FILES)).then(() => self.skipWaiting()));

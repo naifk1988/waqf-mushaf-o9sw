@@ -33,6 +33,9 @@ def split_note(reason):
     return clean, "؛ ".join(notes)
 
 
+QRE = re.compile(r"قرأ|قرئ|قراءة|قراءته|لمن (?:رفع|نصب|خفض|جر|جرّ|كسر|فتح|ضم|شدد|خفف)|ومن (?:رفع|نصب|خفض|جر|جرّ|كسر|فتح|ضم|شدد|خفف)")
+
+
 def category(ruling, typ):
     r = (ruling or "").strip()
     if typ == "ibtida" or r.startswith("ابتداء"):
@@ -90,6 +93,8 @@ def main():
             }
             if note:
                 out["note"] = note
+            if QRE.search(out["reason"] + " " + out["raw"] + " " + out["r"] + " " + out["who"]):
+                out["q"] = 1  # the ruling depends on a reading (qira'a)
             if not out["cue"]:
                 continue
             entries.setdefault(f"{s}:{a}", []).append(out)
@@ -121,6 +126,24 @@ def main():
     for s, part in per.items():
         with open(os.path.join(sdir, f"{s}.json"), "w", encoding="utf-8") as f:
             json.dump(part, f, ensure_ascii=False, separators=(",", ":"))
+    # index of ayahs whose pause rulings depend on the reading: [key, page, cue, [books]]
+    page_of = {}
+    for pg in range(1, 605):
+        fp = os.path.join(ROOT, "data", "q4", f"{pg}.json")
+        if os.path.exists(fp):
+            for k in json.load(open(fp, encoding="utf-8"))["vw"]:
+                page_of.setdefault(k, pg)
+    qidx = {}
+    for key, lst in entries.items():
+        for e in lst:
+            if e.get("q"):
+                d = qidx.setdefault((key, e["cue"].split(" (")[0]), set())
+                d.add(e["b"])
+    qlist = sorted(([k, page_of.get(k, 0), cue, sorted(bs)] for (k, cue), bs in qidx.items()),
+                   key=lambda x: tuple(map(int, x[0].split(":"))))
+    with open(os.path.join(ROOT, "data", "qidx.json"), "w", encoding="utf-8") as f:
+        json.dump(qlist, f, ensure_ascii=False, separators=(",", ":"))
+    print("reading-dependent spots:", len(qlist))
     # preview: inline data + text so the page works without network
     os.makedirs(os.path.join(ROOT, "dist"), exist_ok=True)
     html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
